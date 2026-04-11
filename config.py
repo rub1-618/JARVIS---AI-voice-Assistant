@@ -1,1 +1,0 @@
-GEMINI_KEY = "AIzaSyDMB19XpJzZnCxxkD0rPqbkLHWzAB7qlbE"

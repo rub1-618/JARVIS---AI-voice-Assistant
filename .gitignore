@@ -11,3 +11,10 @@ Cargo.lock
 # Einstellungen von IDEs
 .idea/
 .vscode/
+
+# Claude Code — не выкладывать на GitHub
+CLAUDE.md
+.claude/
+
+# API ключи — не выкладывать
+config.py

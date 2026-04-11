@@ -31,7 +31,7 @@ from google import genai
 from google.genai import types
 import flet as ft
 
-from config import GEMINI_KEY
+from config import GEMINI_KEY as _DEFAULT_GEMINI_KEY
 
 try:
     import GPUtil
@@ -161,9 +161,38 @@ def speak(text: str) -> None:
     print(f"[Jarvis] {text}")
     speech_queue.put(text)
 
+# ── Налаштування (settings) ───────────────────────────────────────────────────
+SETTINGS_FILE = Path("memory/settings.json")
+
+def load_settings() -> dict:
+    try:
+        if SETTINGS_FILE.exists():
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"[error][settings] load: {e}")
+    return {}
+
+def save_settings(data: dict) -> None:
+    try:
+        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        current = load_settings()
+        current.update(data)
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(current, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[error][settings] save: {e}")
+
 # ── Gemini AI ──────────────────────────────────────────────────────────────────
-_ai_client = genai.Client(api_key=GEMINI_KEY)
+def _init_ai_client(api_key: str = None) -> None:
+    global _ai_client, _ai_model
+    key = api_key or load_settings().get("gemini_key") or _DEFAULT_GEMINI_KEY
+    _ai_client = genai.Client(api_key=key)
+    _ai_model = ""
+
+_ai_client: genai.Client = None
 _ai_model: str = ""
+_init_ai_client()
 
 SYSTEM_PROMPT = """
 Ти — Джарвіс, ІІ-асистент з характером Джонні Сільверхенда з Cyberpunk 2077.
@@ -821,7 +850,7 @@ def build_ui(page: ft.Page) -> None:
         bgcolor="#0d0d1a",
         border_radius=12,
         padding=ft.Padding(left=12, right=12, top=12, bottom=12),
-        border=ft.border.all(1, "#1e1e3a"),
+        border=ft.Border.all(1, "#1e1e3a"),
         height=220,
         visible=True,
     )
@@ -870,7 +899,7 @@ def build_ui(page: ft.Page) -> None:
                     bgcolor="#0d0d1a",
                     border_radius=8,
                     padding=ft.Padding(left=12, right=8, top=8, bottom=8),
-                    border=ft.border.all(1, "#1e1e3a"),
+                    border=ft.Border.all(1, "#1e1e3a"),
                 )
             )
         page.update()
@@ -1044,7 +1073,7 @@ def build_ui(page: ft.Page) -> None:
                     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                     bgcolor="#0d0d1a", border_radius=8,
                     padding=ft.Padding(left=12, right=8, top=6, bottom=6),
-                    border=ft.border.all(1, "#1e1e3a"),
+                    border=ft.Border.all(1, "#1e1e3a"),
                 )
             )
         page.update()
@@ -1082,54 +1111,161 @@ def build_ui(page: ft.Page) -> None:
         ],
     )
 
-    def switch_to_main(e):
-        main_view.visible = True
+    # ── Settings view ─────────────────────────────────────────────────────────
+    _saved_key = load_settings().get("gemini_key", "")
+    api_key_field = ft.TextField(
+        label="Gemini API Key",
+        hint_text="AIzaSy...",
+        value=_saved_key,
+        password=True,
+        can_reveal_password=True,
+        bgcolor="#0d0d1a",
+        color="#c0c8e0",
+        border_color="#1e1e3a",
+        focused_border_color="#e94560",
+        label_style=ft.TextStyle(color="#556080"),
+    )
+    settings_status = ft.Text("", color="#00ff88", size=12)
+
+    def save_api_key(e):
+        key = api_key_field.value.strip()
+        if not key:
+            settings_status.value = "⚠ Введи API ключ"
+            settings_status.color = "#e94560"
+            page.update()
+            return
+        save_settings({"gemini_key": key})
+        _init_ai_client(key)
+        settings_status.value = "✅ Ключ збережено. Клієнт перезапущено."
+        settings_status.color = "#00ff88"
+        page.update()
+
+    def clear_api_key(e):
+        save_settings({"gemini_key": ""})
+        api_key_field.value = ""
+        _init_ai_client()
+        settings_status.value = "↩ Використовується ключ з config.py"
+        settings_status.color = "#556080"
+        page.update()
+
+    settings_view = ft.Column(
+        scroll=ft.ScrollMode.AUTO,
+        spacing=10,
+        visible=False,
+        controls=[
+            ft.Container(height=10),
+            ft.Text("НАЛАШТУВАННЯ", color="#e94560", size=13,
+                    weight=ft.FontWeight.BOLD),
+            ft.Divider(color="#1e1e3a", height=10),
+            ft.Text("GEMINI API КЛЮЧ", color="#556080", size=11),
+            ft.Text(
+                "Введи свій особистий ключ з Google AI Studio.\n"
+                "Залиш порожнім — буде використано ключ з config.py.",
+                color="#333366", size=11,
+            ),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("Як отримати ключ:", color="#e94560", size=11,
+                            weight=ft.FontWeight.BOLD),
+                    ft.Text("1. Перейди за посиланням нижче", color="#f0a0b0", size=11),
+                    ft.Text("2. Натисни «Create API key»", color="#f0a0b0", size=11),
+                    ft.Text("3. Скопіюй ключ і встав сюди", color="#f0a0b0", size=11),
+                    ft.TextButton(
+                        "🔗 aistudio.google.com/apikey",
+                        style=ft.ButtonStyle(color="#ffffff"),
+                        on_click=lambda e: page.launch_url("https://aistudio.google.com/apikey"),
+                    ),
+                ], spacing=2),
+                bgcolor="#2a0a14",
+                border_radius=8,
+                padding=ft.Padding(left=12, right=12, top=8, bottom=8),
+                border=ft.Border.all(1, "#e94560"),
+            ),
+            api_key_field,
+            settings_status,
+            ft.Row([
+                ft.FilledButton(
+                    "Зберегти",
+                    bgcolor="#e94560", color="#ffffff",
+                    on_click=save_api_key,
+                ),
+                ft.OutlinedButton(
+                    "Скинути",
+                    style=ft.ButtonStyle(color="#556080"),
+                    on_click=clear_api_key,
+                ),
+            ], spacing=10),
+            ft.Container(height=40),
+        ],
+    )
+
+    # ── Навігація ──────────────────────────────────────────────────────────────
+    btn_main = ft.TextButton("JARVIS", style=ft.ButtonStyle(color="#e94560"))
+    btn_cmds = ft.TextButton("КОМАНДИ", style=ft.ButtonStyle(color="#556080"))
+    btn_lab = ft.TextButton("PLUGIN LAB", style=ft.ButtonStyle(color="#556080"))
+    btn_settings = ft.TextButton("⚙", style=ft.ButtonStyle(color="#556080"))
+
+    def _hide_all():
+        main_view.visible = False
         commands_view.visible = False
         plugin_lab_view.visible = False
-        btn_main.style = ft.ButtonStyle(color="#e94560")
+        settings_view.visible = False
+
+    def _dim_all():
+        btn_main.style = ft.ButtonStyle(color="#556080")
         btn_cmds.style = ft.ButtonStyle(color="#556080")
         btn_lab.style = ft.ButtonStyle(color="#556080")
+        btn_settings.style = ft.ButtonStyle(color="#556080")
+
+    def switch_to_main(e):
+        _hide_all(); _dim_all()
+        main_view.visible = True
+        btn_main.style = ft.ButtonStyle(color="#e94560")
         page.update()
 
     def switch_to_cmds(e):
-        main_view.visible = False
+        _hide_all(); _dim_all()
         commands_view.visible = True
-        plugin_lab_view.visible = False
-        btn_main.style = ft.ButtonStyle(color="#556080")
         btn_cmds.style = ft.ButtonStyle(color="#e94560")
-        btn_lab.style = ft.ButtonStyle(color="#556080")
         page.update()
 
     def switch_to_lab(e):
-        main_view.visible = False
-        commands_view.visible = False
+        _hide_all(); _dim_all()
         plugin_lab_view.visible = True
-        btn_main.style = ft.ButtonStyle(color="#556080")
-        btn_cmds.style = ft.ButtonStyle(color="#556080")
         btn_lab.style = ft.ButtonStyle(color="#e94560")
         refresh_plugin_list()
         page.update()
 
-    btn_main = ft.TextButton("JARVIS", on_click=switch_to_main,
-                             style=ft.ButtonStyle(color="#e94560"))
-    btn_cmds = ft.TextButton("КОМАНДИ", on_click=switch_to_cmds,
-                              style=ft.ButtonStyle(color="#556080"))
-    btn_lab = ft.TextButton("PLUGIN LAB", on_click=switch_to_lab,
-                             style=ft.ButtonStyle(color="#556080"))
+    def switch_to_settings(e):
+        _hide_all(); _dim_all()
+        settings_view.visible = True
+        btn_settings.style = ft.ButtonStyle(color="#e94560")
+        api_key_field.value = load_settings().get("gemini_key", "")
+        settings_status.value = ""
+        page.update()
+
+    btn_main.on_click = switch_to_main
+    btn_cmds.on_click = switch_to_cmds
+    btn_lab.on_click = switch_to_lab
+    btn_settings.on_click = switch_to_settings
 
     page.add(
         ft.Column(
             spacing=4,
             controls=[
                 ft.Row([
-                    ft.Text("JARVIS", size=24, weight=ft.FontWeight.BOLD, color="#e94560"),
-                    ft.Text("  AI Voice Assistant", size=11, color="#556080"),
-                ], alignment=ft.MainAxisAlignment.START),
+                    ft.Row([
+                        ft.Text("JARVIS", size=24, weight=ft.FontWeight.BOLD, color="#e94560"),
+                        ft.Text("AI Voice Assistant", size=11, color="#556080"),
+                    ]),
+                    btn_settings,
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 ft.Row([btn_main, btn_cmds, btn_lab]),
                 ft.Divider(color="#1e1e3a", height=10),
                 main_view,
                 commands_view,
                 plugin_lab_view,
+                settings_view,
             ],
         )
     )
@@ -1167,4 +1303,4 @@ def build_ui(page: ft.Page) -> None:
 # ── Точка входа ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     threading.Thread(target=speech_worker, daemon=True).start()
-    ft.app(target=build_ui)
+    ft.app(target=build_ui, view=ft.AppView.FLET_APP)
