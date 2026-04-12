@@ -7,6 +7,7 @@ import os
 import re
 import time
 import ctypes
+import ctypes.wintypes
 import datetime
 import threading
 import queue
@@ -2014,6 +2015,30 @@ def build_ui(page: ft.Page) -> None:
         except Exception as e:
             print(f"[overlay] foreground err: {e}")
 
+    # ── Примушуємо Flutter рендерити кадр через WM_MOUSEMOVE ─────────────────
+    _nudge_hwnd: list = [0]   # list щоб можна було змінювати з closure
+
+    def _nudge_flutter():
+        """Надсилає фіктивний WM_MOUSEMOVE у Flutter-вікно.
+        Flutter Desktop зупиняє vsync при відсутності вводу;
+        будь-яка подія миші змушує SchedulerBinding.scheduleFrame()."""
+        try:
+            user32 = ctypes.windll.user32
+            if not _nudge_hwnd[0]:
+                _nudge_hwnd[0] = user32.FindWindowW(None, page.title)
+            hwnd = _nudge_hwnd[0]
+            if not hwnd:
+                return
+            pt = ctypes.wintypes.POINT()
+            user32.GetCursorPos(ctypes.byref(pt))
+            user32.ScreenToClient(hwnd, ctypes.byref(pt))
+            lparam = ctypes.c_long(
+                ((pt.y & 0xFFFF) << 16) | (pt.x & 0xFFFF)
+            ).value
+            user32.PostMessageW(hwnd, 0x0200, 0, lparam)   # WM_MOUSEMOVE
+        except Exception:
+            pass
+
     def poller():
         _ptick        = 0
         _pphase       = False
@@ -2092,6 +2117,7 @@ def build_ui(page: ft.Page) -> None:
                             _tk_queue.put(("msg", role, text))
 
                 if needs_update:
+                    _nudge_flutter()
                     page.update()
 
             except Exception as e:
