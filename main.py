@@ -1990,9 +1990,11 @@ def build_ui(page: ft.Page) -> None:
             print(f"[overlay] foreground err: {e}")
 
     def poller():
-        _ptick   = 0
-        _pphase  = False
-        _viz_tick = 0
+        _ptick        = 0
+        _pphase       = False
+        _viz_tick     = 0
+        _breath_tick  = 0
+        _breath_phase = False
         while True:
             try:
                 needs_update = False
@@ -2011,8 +2013,16 @@ def build_ui(page: ft.Page) -> None:
                         needs_update = True
                     _ptick = 0
 
+                    # ── «дихання» логотипу ±0.2% (суб-піксель, не помітно) ─
+                    # Тримає Flutter animation engine живим → бари оновлюються
+                    _breath_tick += 1
+                    if _breath_tick >= 30:   # 30 × 20мс = 600мс
+                        _breath_tick  = 0
+                        _breath_phase = not _breath_phase
+                        pulse_wrapper.scale = 1.002 if _breath_phase else 0.998
+                        needs_update = True
+
                 # ── audio visualizer (оновлення кожні 3 тіки = ~60мс) ──────
-                # needs_update завжди True щоб тримати Flutter renderer активним
                 if HAS_AUDIO_VIZ:
                     _viz_tick += 1
                     if _viz_tick >= 3:
@@ -2022,7 +2032,7 @@ def build_ui(page: ft.Page) -> None:
                             for i, (bar, v) in enumerate(zip(_viz_bars, bands)):
                                 _bar_smooth[i] = _bar_smooth[i] * 0.5 + v * 0.5
                                 bar.height = max(3, int(_bar_smooth[i] * _bar_max_h))
-                            needs_update = True  # завжди — інакше Flutter засипає
+                            needs_update = True
                         except Exception:
                             pass
 
