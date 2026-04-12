@@ -7,7 +7,6 @@ import os
 import re
 import time
 import ctypes
-import ctypes.wintypes
 import datetime
 import threading
 import queue
@@ -57,13 +56,7 @@ except ImportError:
     HAS_SCREEN_CATCHER = False
     print("[info] Screen Catcher не знайдено")
 
-try:
-    import audio_viz
-    HAS_AUDIO_VIZ = True
-    print("[info] Audio Viz завантажено")
-except ImportError:
-    HAS_AUDIO_VIZ = False
-    print("[info] Audio Viz не знайдено — встанови: cd plugins_rust/audio_viz && maturin develop")
+
 
 # ── Глобальные переменные ──────────────────────────────────────────────────────
 is_speaking: bool = False
@@ -962,7 +955,6 @@ def execute_cmd(cmd: str, raw_text: str) -> None:
                 custom_cmds[best_custom["idx"]]["name"]
             )
         elif raw_text.strip():
-            log_queue.put(("user", raw_text))
             speak(ask_ai(raw_text))
 
 # ── Распознавание речи ─────────────────────────────────────────────────────────
@@ -984,6 +976,8 @@ def _speech_callback(recognizer, audio) -> None:
         for w in OPTS["tbr"]:
             query = query.replace(w, "").strip()
         cmd_res = recognize_cmd(query)
+        if raw_query.strip():
+            log_queue.put(("user", raw_query))
         if cmd_res["percent"] > 50:
             execute_cmd(cmd_res["cmd"], raw_query)
         else:
@@ -1063,33 +1057,6 @@ def build_ui(page: ft.Page) -> None:
 
     _pulse = {"active": False}
 
-    # ── Audio Visualizer — еквалайзер під логотипом ───────────────────────────
-    N_BARS     = 20
-    _bar_max_h = 48
-    _bar_smooth = [0.0] * N_BARS
-
-    _viz_bars = [
-        ft.Container(
-            width=10,
-            height=3,
-            bgcolor="#3b82f6",
-            border_radius=ft.BorderRadius(top_left=2, top_right=2,
-                                          bottom_left=0, bottom_right=0),
-        )
-        for _ in range(N_BARS)
-    ]
-
-    viz_container = ft.Container(
-        content=ft.Row(
-            controls=_viz_bars,
-            spacing=3,
-            alignment=ft.MainAxisAlignment.CENTER,
-            vertical_alignment=ft.CrossAxisAlignment.END,
-        ),
-        height=_bar_max_h + 4,
-        visible=HAS_AUDIO_VIZ,
-    )
-
     # ── Tkinter overlay — рендериться завжди, незалежно від фокусу Flutter ───────
     _tk_queue: "queue.Queue" = queue.Queue()
 
@@ -1104,7 +1071,7 @@ def build_ui(page: ft.Page) -> None:
             root.configure(bg="#1e1f22")
             root.withdraw()
 
-            _W, _H = 320, (148 if HAS_AUDIO_VIZ else 110)
+            _W, _H = 320, 110
 
             def _reposition(pos: str = "br") -> None:
                 sw = root.winfo_screenwidth()
@@ -1119,13 +1086,13 @@ def build_ui(page: ft.Page) -> None:
             _reposition("br")
 
             _C = {
-                "listening": {"bar": "#3b82f6", "fg": "#3b82f6", "txt": "СЛУХАЮ"},
-                "speaking":  {"bar": "#3b82f6", "fg": "#3b82f6", "txt": "ГОВОРЮ"},
-                "other":     {"bar": "#3b82f6", "fg": "#3b82f6", "txt": "КАЛІБР."},
+                "listening": {"bar": "#e94560", "fg": "#e94560", "txt": "СЛУХАЮ"},
+                "speaking":  {"bar": "#e94560", "fg": "#e94560", "txt": "ГОВОРЮ"},
+                "other":     {"bar": "#e94560", "fg": "#e94560", "txt": "КАЛІБР."},
             }
 
             # ── Left accent bar ──────────────────────────────────────────────
-            bar = tk.Frame(root, width=4, bg="#3b82f6")
+            bar = tk.Frame(root, width=4, bg="#e94560")
             bar.pack(side="left", fill="y")
             bar.pack_propagate(False)
 
@@ -1134,7 +1101,7 @@ def build_ui(page: ft.Page) -> None:
             j_col.pack(side="left", fill="y")
             j_col.pack_propagate(False)
             j_lbl = tk.Label(j_col, text="J", font=("Segoe UI", 30, "bold"),
-                             fg="#3b82f6", bg="#1e1f22")
+                             fg="#e94560", bg="#1e1f22")
             j_lbl.pack(expand=True)
 
             # ── Vertical separator ───────────────────────────────────────────
@@ -1152,11 +1119,11 @@ def build_ui(page: ft.Page) -> None:
             st_frame = tk.Frame(hdr, bg="#1e1f22")
             st_frame.pack(side="right")
             dot_lbl  = tk.Label(st_frame, text="●", font=("Segoe UI", 9),
-                                fg="#3b82f6", bg="#1e1f22")
+                                fg="#e94560", bg="#1e1f22")
             dot_lbl.pack(side="left")
             state_lbl = tk.Label(st_frame, text="СЛУХАЮ",
                                  font=("Segoe UI", 9, "bold"),
-                                 fg="#3b82f6", bg="#1e1f22")
+                                 fg="#e94560", bg="#1e1f22")
             state_lbl.pack(side="left", padx=(3, 0))
 
             # divider
@@ -1167,15 +1134,6 @@ def build_ui(page: ft.Page) -> None:
                                font=("Segoe UI", 9), fg="#72767d", bg="#1e1f22",
                                anchor="w", justify="left", wraplength=210)
             msg_lbl.pack(fill="x", padx=(8, 4))
-
-            # ── Equalizer canvas (tkinter — не залежить від Flutter) ─────────
-            if HAS_AUDIO_VIZ:
-                tk.Frame(info, height=1, bg="#2f3136").pack(fill="x", padx=8, pady=(5, 0))
-                _viz_cv = tk.Canvas(info, bg="#1e1f22", height=30,
-                                    bd=0, highlightthickness=0)
-                _viz_cv.pack(fill="x", padx=(8, 4), pady=(2, 4))
-            else:
-                _viz_cv = None
 
             def _tk_close(_e=None):
                 log_queue.put(("__overlay__", "hide"))
@@ -1221,22 +1179,6 @@ def build_ui(page: ft.Page) -> None:
                             )
                 except queue.Empty:
                     pass
-
-                # ── малюємо еквалайзер на canvas кожні 33мс ─────────────
-                if HAS_AUDIO_VIZ and _viz_cv is not None:
-                    try:
-                        bands = audio_viz.get_frequency_bands(16)
-                        _viz_cv.delete("all")
-                        bw, sp = 12, 3   # ширина бару, відступ
-                        for i, v in enumerate(bands):
-                            x0 = i * (bw + sp)
-                            h  = max(2, int(v * 26))
-                            _viz_cv.create_rectangle(
-                                x0, 28 - h, x0 + bw, 28,
-                                fill="#3b82f6", outline="",
-                            )
-                    except Exception:
-                        pass
 
                 root.after(33, _poll)
 
@@ -1447,7 +1389,6 @@ def build_ui(page: ft.Page) -> None:
         controls=[
             ft.Container(height=10),
             ft.Row([pulse_wrapper], alignment=ft.MainAxisAlignment.CENTER),
-            viz_container,
             ft.Divider(color="#1e1e3a", height=20),
             ft.Text("ЛОГ ДІАЛОГУ", color=accent, size=11),
             log_container,
@@ -2015,36 +1956,9 @@ def build_ui(page: ft.Page) -> None:
         except Exception as e:
             print(f"[overlay] foreground err: {e}")
 
-    # ── Примушуємо Flutter рендерити кадр через WM_MOUSEMOVE ─────────────────
-    _nudge_hwnd: list = [0]   # list щоб можна було змінювати з closure
-
-    def _nudge_flutter():
-        """Надсилає фіктивний WM_MOUSEMOVE у Flutter-вікно.
-        Flutter Desktop зупиняє vsync при відсутності вводу;
-        будь-яка подія миші змушує SchedulerBinding.scheduleFrame()."""
-        try:
-            user32 = ctypes.windll.user32
-            if not _nudge_hwnd[0]:
-                _nudge_hwnd[0] = user32.FindWindowW(None, page.title)
-            hwnd = _nudge_hwnd[0]
-            if not hwnd:
-                return
-            pt = ctypes.wintypes.POINT()
-            user32.GetCursorPos(ctypes.byref(pt))
-            user32.ScreenToClient(hwnd, ctypes.byref(pt))
-            lparam = ctypes.c_long(
-                ((pt.y & 0xFFFF) << 16) | (pt.x & 0xFFFF)
-            ).value
-            user32.PostMessageW(hwnd, 0x0200, 0, lparam)   # WM_MOUSEMOVE
-        except Exception:
-            pass
-
     def poller():
-        _ptick        = 0
-        _pphase       = False
-        _viz_tick     = 0
-        _breath_tick  = 0
-        _breath_phase = False
+        _ptick  = 0
+        _pphase = False
         while True:
             try:
                 needs_update = False
@@ -2063,28 +1977,6 @@ def build_ui(page: ft.Page) -> None:
                         needs_update = True
                     _ptick = 0
 
-                    # ── «дихання» логотипу ±0.2% (суб-піксель, не помітно) ─
-                    # Тримає Flutter animation engine живим → бари оновлюються
-                    _breath_tick += 1
-                    if _breath_tick >= 30:   # 30 × 20мс = 600мс
-                        _breath_tick  = 0
-                        _breath_phase = not _breath_phase
-                        pulse_wrapper.scale = 1.002 if _breath_phase else 0.998
-                        needs_update = True
-
-                # ── audio visualizer (оновлення кожні 3 тіки = ~60мс) ──────
-                if HAS_AUDIO_VIZ:
-                    _viz_tick += 1
-                    if _viz_tick >= 3:
-                        _viz_tick = 0
-                        try:
-                            bands = audio_viz.get_frequency_bands(N_BARS)
-                            for i, (bar, v) in enumerate(zip(_viz_bars, bands)):
-                                _bar_smooth[i] = _bar_smooth[i] * 0.5 + v * 0.5
-                                bar.height = max(3, int(_bar_smooth[i] * _bar_max_h))
-                            needs_update = True
-                        except Exception:
-                            pass
 
                 # ── повідомлення з черги ───────────────────────────────────
                 messages = []
@@ -2117,7 +2009,6 @@ def build_ui(page: ft.Page) -> None:
                             _tk_queue.put(("msg", role, text))
 
                 if needs_update:
-                    _nudge_flutter()
                     page.update()
 
             except Exception as e:
@@ -2130,12 +2021,6 @@ def build_ui(page: ft.Page) -> None:
 
     # чекаємо поки UI завантажиться, потім стартуємо аудіо + голос
     def _start_all():
-        if HAS_AUDIO_VIZ:
-            try:
-                audio_viz.start_stream()
-                print("[info] Audio Viz stream запущено")
-            except Exception as e:
-                print(f"[warn][audio_viz] start_stream: {e}")
         threading.Thread(target=_voice_core, daemon=True).start()
 
     threading.Timer(1.0, _start_all).start()
