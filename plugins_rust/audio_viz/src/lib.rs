@@ -268,5 +268,6 @@ fn one_shot_volume() -> PyResult<f32> {
     stream.play()
         .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
     std::thread::sleep(std::time::Duration::from_millis(80));
-    Ok(*volume.lock().unwrap())
+    let v = *volume.lock().unwrap();
+    Ok(v)
 }

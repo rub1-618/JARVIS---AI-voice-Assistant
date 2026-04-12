@@ -1,7 +1,8 @@
 # ── JARVIS — зависимости Python ───────────────────────────────────────────────
 # Установка: pip install -r requirements.txt
 
-# AI — НОВАЯ библиотека Gemini (заменяет устаревшую google-generativeai)
+# AI — локальна модель через Ollama (primary) + Gemini fallback
+ollama
 google-genai
 
 # Распознавание речи + аудио
