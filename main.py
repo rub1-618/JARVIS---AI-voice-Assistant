@@ -692,25 +692,26 @@ OPTS = {
     "alias": ("джарвіс","джей","джар","джай","jarvis","jay","jar"),
     "tbr":   ("скажи","розкажи","придумай","скільки","вимови","зроби","порахуй"),
     "cmds": {
-        "ctime":       ("поточний час","котра година","скільки часу"),
-        "stats":       ("статистика","стан системи","статус заліза","як там залізо"),
+        "ctime":       ("поточний час","котра година","скільки часу","what time is it","current time","what's the time"),
+        "stats":       ("статистика","стан системи","статус заліза","як там залізо","system stats","system status","how's the hardware"),
         "wakeup":      ("прокидайся татко повернувся","wake up daddy's home"),
-        "window":      ("сховай все крім","згорни все крім","закрий вікно","розгорни вікно","закрий браузер","згорни все"),
-        "dictation":   ("напиши","надрукуй","друкуй","пиши"),
-        "confirm_yes": ("так","вірно","підтверджую","yes"),
-        "confirm_no":  ("ні","скасуй","відміна","no"),
-        "screen":      ("перевір екран","що на екрані","подивись на екран","аналіз екрану","що бачиш"),
-        "plugin":        ("впровади плагін","запусти плагін","завантаж плагін","активуй плагін"),
-        "plugin_create":   ("створи плагін","напиши плагін","зроби плагін","новий плагін"),
-        "plugin_rollback": ("скасуй плагін","відкоти плагін","видали плагін","відміни плагін"),
-        "ai_mode_ollama":  ("режим гемма","режим олама","локальний режим","офлайн режим"),
-        "ai_mode_gemini":  ("режим джеміні","режим гемині","онлайн режим","хмарний режим"),
-        "overlay":     ("оверлей","покажи оверлей","відкрий оверлей","запусти оверлей"),
-        "overlay_hide":("сховай оверлей","закрий оверлей","прибери оверлей","вимкни оверлей"),
-        "overlay_move":("оверлей в","перемісти оверлей","оверлей куток","оверлей кут"),
-        "music_toggle_play_pause":("продовжуй музику","зупини музику","пауза музика","віднови музику", "постав на паузу"),
-        "music_next":("некст трек","наступна пісня","пропусти пісню","ще пісню", "некст", "давай некст"),
-        "music_prev":("давай ще раз", "попередня пісня", "минулий трек", "ще раз", "давай ще раз"),
+        "easter_egg":    ("пасхалка"),
+        "window":      ("сховай все крім","згорни все крім","закрий вікно","розгорни вікно","закрий браузер","згорни все","hide everything except","minimize everything except","close window","restore window","minimize all"),
+        "dictation":   ("напиши","надрукуй","друкуй","пиши","type","write","print"),
+        "confirm_yes": ("так","вірно","підтверджую","yes","confirm","correct"),
+        "confirm_no":  ("ні","скасуй","відміна","no","cancel","abort"),
+        "screen":      ("перевір екран","що на екрані","подивись на екран","аналіз екрану","що бачиш","check screen","what's on screen","analyze screen","what do you see","look at screen"),
+        "plugin":        ("впровади плагін","запусти плагін","завантаж плагін","активуй плагін","run plugin","launch plugin","load plugin","activate plugin"),
+        "plugin_create":   ("створи плагін","напиши плагін","зроби плагін","новий плагін","create plugin","make plugin","new plugin","write plugin"),
+        "plugin_rollback": ("скасуй плагін","відкоти плагін","видали плагін","відміни плагін","remove plugin","delete plugin","rollback plugin","undo plugin"),
+        "ai_mode_ollama":  ("режим гемма","режим олама","локальний режим","офлайн режим","gemma mode","ollama mode","local mode","offline mode"),
+        "ai_mode_gemini":  ("режим джеміні","режим гемині","онлайн режим","хмарний режим","gemini mode","online mode","cloud mode"),
+        "overlay":     ("оверлей","покажи оверлей","відкрий оверлей","запусти оверлей","overlay","show overlay","open overlay"),
+        "overlay_hide":("сховай оверлей","закрий оверлей","прибери оверлей","вимкни оверлей","hide overlay","close overlay","disable overlay"),
+        "overlay_move":("оверлей в","перемісти оверлей","оверлей куток","оверлей кут","move overlay","overlay to","overlay corner"),
+        "music_toggle_play_pause":("продовжуй музику","зупини музику","пауза музика","віднови музику","постав на паузу","pause music","play music","resume music","stop music","toggle music"),
+        "music_next":("некст трек","наступна пісня","пропусти пісню","ще пісню","некст","давай некст","next track","next song","skip song","next"),
+        "music_prev":("давай ще раз","попередня пісня","минулий трек","ще раз","previous song","previous track","go back"),
     },
 }
 
@@ -740,6 +741,11 @@ def execute_cmd(cmd: str, raw_text: str) -> None:
         track = os.path.join(os.path.dirname(__file__), "extra", "The_Clash_-_Should_I_Stay_or_Should_I_Go_Remastered_(SkySound.cc).mp3")
         if os.path.exists(track):
             os.startfile(track)
+
+    elif cmd == "easter_egg":
+        meme = os.path.join(os.path.dirname(__file__), "extra", "image.png")
+        if os.path.exists(meme):
+            os.startfile(meme)
 
     elif cmd.startswith("custom_"):
         # запускаємо програму з кастомних команд

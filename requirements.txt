@@ -23,6 +23,6 @@ GPUtil
 # UI
 flet                 # >= 0.21 поддерживает ft.animation.Animation
 
-# Сборщик Rust-модуля (нужен только для компиляции jarvis_stats)
+# Сборщик Rust-модулей (потрібен для компіляції media_ctrl, jarvis_stats, screen_catcher)
 maturin
 setuptools
