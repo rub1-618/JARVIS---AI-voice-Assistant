@@ -74,7 +74,7 @@ tts_rate: int = 220
 tts_volume: float = 1.0
 
 # індекси голосів (дізнався через enumerate(voices))
-VOICE_RU = 4  # Vsevolod (RHVoice)
+VOICE_RU = 4  # Anton (RHVoice)
 VOICE_EN = 1  # Microsoft David Desktop
 
 # ── Языковые утилиты ───────────────────────────────────────────────────────────
@@ -1353,12 +1353,18 @@ def build_ui(page: ft.Page) -> None:
         color="#666688", size=10,
         visible=(AI_MODE == "ollama"),
     )
+    _gemini_hint = ft.Text(
+        "⚠  API не нескінченний, стеж за лімітом запитів від Google. Якщо щось пішло не так — перемикай на Gemma 4.",
+        color="#666688", size=10,
+        visible=(AI_MODE == "gemini")
+    )
+
     _seg_ollama = ft.Container(
         content=ft.Text("⬡  Gemma 4  (локально)", size=12, weight=ft.FontWeight.BOLD,
                         color="#ffffff" if AI_MODE == "ollama" else secondary),
-        bgcolor="#00cc66" if AI_MODE == "ollama" else bg,
+        bgcolor= "#20cccc" if AI_MODE == "ollama" else bg,
         border_radius=ft.BorderRadius(top_left=8, bottom_left=8, top_right=0, bottom_right=0),
-        border=ft.Border.all(1, "#00cc66"),
+        border=ft.Border.all(1, "#20cccc"),
         padding=ft.Padding(left=14, right=14, top=10, bottom=10),
         expand=True,
     )
@@ -1377,14 +1383,15 @@ def build_ui(page: ft.Page) -> None:
         AI_MODE = mode
         save_settings({"ai_mode": mode})
         # оновлення шапки
-        ai_mode_btn.text = _mode_label(mode)
+        ai_mode_btn.content = ft.Text(_mode_label(mode), color="#ffffff")
         ai_mode_btn.bgcolor = _mode_color(mode)
         # оновлення сегментів
-        _seg_ollama.bgcolor       = "#00cc66" if mode == "ollama" else bg
+        _seg_ollama.bgcolor       = "#20cccc" if mode == "ollama" else bg
         _seg_ollama.content.color = "#ffffff"  if mode == "ollama" else secondary
         _seg_gemini.bgcolor       = "#a78bfa" if mode == "gemini" else bg
         _seg_gemini.content.color = "#ffffff"  if mode == "gemini" else secondary
         _ollama_hint.visible = (mode == "ollama")
+        _gemini_hint.visible = (mode == "gemini")
         if mode == "ollama":
             page.snack_bar = ft.SnackBar(
                 content=ft.Text(
@@ -1416,6 +1423,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Text("AI МОДЕЛЬ", color=accent, size=11),
             ft.Row(controls=[_seg_ollama, _seg_gemini], spacing=0),
             _ollama_hint,
+            _gemini_hint,
             ft.Container(height=60),
         ],
     )
@@ -1776,7 +1784,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Text(
                 "Локальна модель — працює офлайн, без токенів.\n"
                 "Встанови Ollama та завантаж модель: ollama pull gemma4",
-                color="#333366", size=11,
+                color=secondary, size=11,
             ),
             ft.Row([_ollama_status_dot, _ollama_status_txt], spacing=4),
             ollama_model_field,
@@ -1794,7 +1802,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Text(
                 "Використовується лише якщо Ollama не запущено.\n"
                 "Залиш порожнім — буде використано ключ з config.py.",
-                color="#333366", size=11,
+                color=secondary, size=11,
             ),
             api_key_field,
             ft.Row([
@@ -1820,7 +1828,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Text("ТЕМА ІНТЕРФЕЙСУ", color=secondary, size=11),
             ft.Text(
                 "Вибери готову тему або введи свої HEX-кольори.",
-                color="#333366", size=11,
+                color=secondary, size=11,
             ),
             ft.Row(
                 wrap=True,
@@ -1919,7 +1927,7 @@ def build_ui(page: ft.Page) -> None:
         return "⬡ Gemma 4" if mode == "ollama" else "✦ Gemini"
 
     def _mode_color(mode: str) -> str:
-        return "#00cc66" if mode == "ollama" else "#a78bfa"
+        return "#20cccc" if mode == "ollama" else "#a78bfa"
 
     ai_mode_btn = ft.FilledButton(
         _mode_label(AI_MODE),
