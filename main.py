@@ -56,6 +56,14 @@ except ImportError:
     HAS_SCREEN_CATCHER = False
     print("[info] Screen Catcher не знайдено")
 
+try:
+    import media_ctrl
+    HAS_MEDIA_CTRL = True
+    print("[info] Media Ctrl завантажено")
+except ImportError:
+    HAS_MEDIA_CTRL = False
+    print("[info] Media Ctrl не знайдено")
+
 
 
 # ── Глобальные переменные ──────────────────────────────────────────────────────
@@ -699,6 +707,9 @@ OPTS = {
         "overlay":     ("оверлей","покажи оверлей","відкрий оверлей","запусти оверлей"),
         "overlay_hide":("сховай оверлей","закрий оверлей","прибери оверлей","вимкни оверлей"),
         "overlay_move":("оверлей в","перемісти оверлей","оверлей куток","оверлей кут"),
+        "music_toggle_play_pause":("продовжуй музику","зупини музику","пауза музика","віднови музику", "постав на паузу"),
+        "music_next":("некст трек","наступна пісня","пропусти пісню","ще пісню", "некст", "давай некст"),
+        "music_prev":("давай ще раз", "попередня пісня", "минулий трек", "ще раз", "давай ще раз"),
     },
 }
 
@@ -909,6 +920,15 @@ def execute_cmd(cmd: str, raw_text: str) -> None:
             pos = "tl"
         log_queue.put(("__overlay__", f"pos:{pos}"))
         speak("Переміщую, сер.")
+
+    elif cmd == "music_toggle_play_pause":
+        media_ctrl.toggle_play_pause()
+
+    elif cmd == "music_next":
+        media_ctrl.next_track()
+
+    elif cmd == "music_prev":
+        media_ctrl.prev_track()
 
     elif cmd == "unknown":
         # ── якщо чекаємо опис плагіну ─────────────────────────────────────
