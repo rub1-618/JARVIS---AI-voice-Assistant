@@ -1021,7 +1021,7 @@ def _voice_core() -> None:
         with mic as source:
             print("[info] Калібрування мікрофону...")
             recognizer.adjust_for_ambient_noise(source, duration=1.5)
-        speak("Система онлайн. Джарвіс на зв'язку, сер.")
+        speak("Система онлайн. Томікс на зв'язку, сер.")
         recognizer.listen_in_background(mic, _speech_callback, phrase_time_limit=8)
         log_queue.put(("__state__", "listening"))
         print("[info] Слухаю.")
@@ -1133,7 +1133,7 @@ def build_ui(page: ft.Page) -> None:
             info = tk.Frame(root, bg="#1e1f22")
             info.pack(side="left", fill="both", expand=True)
 
-            # header row: "JARVIS"  [● STATE]
+            # header row: "TOMIX"  [● STATE]
             hdr = tk.Frame(info, bg="#1e1f22")
             hdr.pack(fill="x", padx=(8, 6), pady=(9, 2))
             tk.Label(hdr, text="TOMIX", font=("Segoe UI", 10, "bold"),
@@ -1963,7 +1963,7 @@ def build_ui(page: ft.Page) -> None:
     # початковий стан вже встановлено через початкові значення елементів
 
     def _force_foreground():
-        """Виводить вікно JARVIS на передній план через AttachThreadInput trick."""
+        """Виводить вікно Tomix на передній план через AttachThreadInput trick."""
         try:
             user32  = ctypes.windll.user32
             kernel32 = ctypes.windll.kernel32
