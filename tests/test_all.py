@@ -22,9 +22,30 @@ def setup_module():
 # ── _strip_markdown ────────────────────────────────────────────────────────────
 
 from main import _strip_markdown
-def test_strip_markdown():
-    text = "**жирний** текст"
-    assert _strip_markdown(text) == "жирний текст"
+
+def test_strip_bold():
+    text = "**bold** text"
+    assert _strip_markdown(text) == "bold text"
+
+def test_strip_bullet():
+    text = "- bullet text"
+    assert _strip_markdown(text) == "bullet text"
+
+def test_strip_link():
+    text = "[text](https://url.com)"
+    assert _strip_markdown(text) == "text"
+
+def test_strip_header():
+    text = "## header text"
+    assert _strip_markdown(text) == "header text"
+
+def test_strip_under():
+    text = "_under_ text"
+    assert _strip_markdown(text) == "under text"
+
+def test_strip_code():
+    text = "`code` text"
+    assert _strip_markdown(text) == "text"
 
 # ── recognize_cmd ──────────────────────────────────────────────────────────────
 
