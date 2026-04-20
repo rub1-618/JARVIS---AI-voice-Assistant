@@ -65,7 +65,6 @@ fn file_ops(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(write_file, m)?)?;
     m.add_function(wrap_pyfunction!(append_file, m)?)?;
     m.add_function(wrap_pyfunction!(list_files, m)?)?;
-    m.add_function(wrap_pyfunction!(file_exists, m)?)?;
     m.add_function(wrap_pyfunction!(delete_file, m)?)?;
     m.add_function(wrap_pyfunction!(rename_file, m)?)?;
         Ok(())

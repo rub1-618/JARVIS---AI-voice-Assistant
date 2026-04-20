@@ -74,6 +74,14 @@ except ImportError:
     print("[info] Media Ctrl не знайдено")
 
 try:
+    import audio_viz
+    USE_AUDIO_VIZ = True
+    print("[info] Аудіо візуалізацію завантажено")
+except ImportError:
+    USE_AUDIO_VIZ = False
+    print("[info] Аудіо візуалізацію не знайдено, використовуємо нічого")
+
+try:
     import file_ops
     HAS_FILE_OPS = True
     print("[info] File Ops завантажено")
@@ -1803,7 +1811,7 @@ def build_ui(page: ft.Page) -> None:
                 clip_behavior=ft.ClipBehavior.HARD_EDGE,
             ),
         ], spacing=0),
-        border_radius=3,
+        border_radius=0,
         border=ft.Border.all(1, "#2a1020"),
         clip_behavior=ft.ClipBehavior.HARD_EDGE,
     )
@@ -1822,7 +1830,7 @@ def build_ui(page: ft.Page) -> None:
                     size=12, selectable=True,
                 ), 
                 bgcolor="#131328" if is_user else "#1a0f1f",
-                border_radius=3,
+                border_radius=0,
                 padding=ft.Padding(left=10, right=10, top=6, bottom=6),
                 alignment=ft.Alignment(1, 0) if is_user else ft.Alignment(-1, 0),
             )
@@ -1874,7 +1882,7 @@ def build_ui(page: ft.Page) -> None:
                             style=ft.ButtonStyle(color=accent)),
                     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                     bgcolor=bg,
-                    border_radius=3,
+                    border_radius=0,
                     padding=ft.Padding(left=12, right=8, top=8, bottom=8),
                     border=ft.Border.all(1, "#2a1020"),
                 )
@@ -1935,7 +1943,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("КОМАНДИ", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             cmd_list,
@@ -1943,7 +1951,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("ДОДАТИ КОМАНДУ", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             name_field,
@@ -1974,7 +1982,7 @@ def build_ui(page: ft.Page) -> None:
         content=ft.Text("⬡  Gemma 4  (локально)", size=12, weight=ft.FontWeight.BOLD,
                         color="#ffffff" if AI_MODE == "ollama" else secondary),
         bgcolor= "#20cccc" if AI_MODE == "ollama" else bg,
-        border_radius=ft.BorderRadius(top_left=3, bottom_left=3, top_right=0, bottom_right=0),
+        border_radius=0,
         border=ft.Border.all(1, "#20cccc"),
         padding=ft.Padding(left=14, right=14, top=10, bottom=10),
         expand=True,
@@ -1983,7 +1991,7 @@ def build_ui(page: ft.Page) -> None:
         content=ft.Text("✦  Gemini API  (хмара)", size=12, weight=ft.FontWeight.BOLD,
                         color="#ffffff" if AI_MODE == "gemini" else secondary),
         bgcolor="#a78bfa" if AI_MODE == "gemini" else bg,
-        border_radius=ft.BorderRadius(top_left=0, bottom_left=0, top_right=3, bottom_right=3),
+        border_radius=0,
         border=ft.Border.all(1, "#a78bfa"),
         padding=ft.Padding(left=14, right=14, top=10, bottom=10),
         expand=True,
@@ -2020,6 +2028,9 @@ def build_ui(page: ft.Page) -> None:
 
     # ── Навігація між екранами (замість ft.Tabs які не працюють в 0.84) ──────
     # навігація між екранами через visible
+    bars = [ft.Container(width=8, height=60, bgcolor=accent, border_radius=0) for bar in range(16)]
+    bars_row = ft.Row(bars, alignment=ft.MainAxisAlignment.CENTER)
+
     main_view = ft.Column(
         scroll=ft.ScrollMode.AUTO,
         spacing=8,
@@ -2035,7 +2046,7 @@ def build_ui(page: ft.Page) -> None:
                 content=ft.Text("AI МОДЕЛЬ", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
                 bgcolor="#1a0810",
-                border_radius=3,
+                border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             ft.Row(controls=[_seg_ollama, _seg_gemini], spacing=0),
@@ -2129,7 +2140,7 @@ def build_ui(page: ft.Page) -> None:
                         ft.TextButton("▶", on_click=lambda e, name=p: _run_plugin(name),
                             style=ft.ButtonStyle(color="#00ff88")),
                     ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    bgcolor=bg, border_radius=3,
+                    bgcolor=bg, border_radius=0,
                     padding=ft.Padding(left=12, right=8, top=6, bottom=6),
                     border=ft.Border.all(1, "#2a1020"),
                 )
@@ -2156,7 +2167,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("ВСТАНОВЛЕНІ ПЛАГІНИ", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             plugin_list_col,
@@ -2164,7 +2175,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("НОВИЙ ПЛАГІН", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             plugin_name_field,
@@ -2241,7 +2252,7 @@ def build_ui(page: ft.Page) -> None:
     # Ліва акцентна смужка (як індикатор активного каналу в Discord)
     overlay_view = ft.Container(
         bgcolor="#1e1f22",
-        border_radius=3,
+        border_radius=0,
         border=ft.Border.all(1, "#2f3136"),
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         padding=ft.Padding(left=0, right=0, top=0, bottom=0),
@@ -2256,7 +2267,7 @@ def build_ui(page: ft.Page) -> None:
                     # ── Заголовок
                     ft.Row([
                         ft.Row([
-                            ft.Container(width=6, height=6, border_radius=3, bgcolor=accent),
+                            ft.Container(width=6, height=6, border_radius=0, bgcolor=accent),
                             ft.Text("TOMIX", color="#ffffff", size=11, weight=ft.FontWeight.W_700),
                         ], spacing=5),
                         ft.Row([
@@ -2287,6 +2298,43 @@ def build_ui(page: ft.Page) -> None:
         visible=False,
         controls=[overlay_view],
     )
+
+    # ── Onboarding ─────────────────────────────────────────────────────────
+
+    def show_onboarding():
+        step = [0]
+        print("onboarding called")
+
+        def next_step(e):
+            step[0] += 1
+            render_step()
+
+        def close(e):
+            dlg.open = False
+            page.update()
+
+        dlg = ft.AlertDialog(
+            title=ft.Text("Welcome to Tomix!"),
+            modal=True,
+            content=ft.Text("Обирай свій ШІ режим!"),
+            actions=[ft.TextButton("Далі", on_click=next_step)],
+        )
+
+        def render_step():
+            if step[0] == 0:
+                dlg.content = ft.Text("Обирай свій ШІ режим!")
+                dlg.actions = [ft.TextButton("Далі", on_click=next_step)]
+            elif step[0] == 1:
+                dlg.content = ft.Text("Користуйся безліччю функцій з документації '?'!")
+                dlg.actions = [ft.TextButton("Далі", on_click=next_step)]
+            elif step[0] == 2:
+                dlg.content = ft.Text("Tomix — Do it your way!")
+                dlg.actions = [ft.TextButton("Готово", on_click=close)]
+            page.update()
+
+        page.overlay.append(dlg)
+        dlg.open = True
+        page.update()
 
     # ── Settings view ─────────────────────────────────────────────────────────
     # Поля кольорів теми
@@ -2414,14 +2462,14 @@ def build_ui(page: ft.Page) -> None:
                 content=ft.Text("НАЛАШТУВАННЯ", color="#ffffff", size=11,
                                 weight=ft.FontWeight.BOLD),
                 bgcolor="#1a0810",
-                border_radius=3,
+                border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=8, bottom=8),
             ),
             # ── Ollama ────────────────────────────────────────────────────────
             ft.Container(
                 content=ft.Text("OLLAMA / GEMMA 4", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             ft.Text(
@@ -2443,7 +2491,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("GEMINI API (FALLBACK)", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             ft.Text(
@@ -2472,7 +2520,7 @@ def build_ui(page: ft.Page) -> None:
                             weight=ft.FontWeight.W_700),
                     _rate_label,
                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             ft.Slider(min=100, max=300, value=190, divisions=20,
@@ -2482,7 +2530,7 @@ def build_ui(page: ft.Page) -> None:
             ft.Container(
                 content=ft.Text("ТЕМА ІНТЕРФЕЙСУ", color="#ffffff", size=10,
                                 weight=ft.FontWeight.W_700),
-                bgcolor="#1a0810", border_radius=3,
+                bgcolor="#1a0810", border_radius=0,
                 padding=ft.Padding(left=12, right=12, top=7, bottom=7),
             ),
             ft.Text(
@@ -2572,6 +2620,22 @@ def build_ui(page: ft.Page) -> None:
         api_key_field.value = load_settings().get("gemini_key", "")
         settings_status.value = ""
         page.update()
+
+    def on_key(e):
+        if e.ctrl and e.key == "1":
+            switch_to_main(None)
+            pass
+        if e.ctrl and e.key == "2":
+            switch_to_cmds(None)
+            pass
+        if e.ctrl and e.key == "3":
+            switch_to_lab(None)
+            pass
+        if e.ctrl and e.key == "4":
+            switch_to_settings(None)
+            pass
+
+    page.on_keyboard_event = on_key
 
     btn_main.on_click = switch_to_main
     btn_cmds.on_click = switch_to_cmds
@@ -2678,6 +2742,11 @@ def build_ui(page: ft.Page) -> None:
         while True:
             try:
                 needs_update = False
+                if USE_AUDIO_VIZ:
+                    bands = audio_viz.get_frequency_bands(16)
+                    for i in range(len(bars)):
+                        bars[i].scale = ft.Scale(scale_y=bands[i])
+                    needs_update = True
 
                 # ── пульсація кіл ──────────────────────────────────────────
                 if _pulse["active"]:
@@ -2730,6 +2799,7 @@ def build_ui(page: ft.Page) -> None:
 
             except Exception as e:
                 print(f"[error][poller] {e}")
+
             time.sleep(0.02)  # 20мс — плавніше
 
     threading.Thread(target=poller, daemon=True).start()
@@ -2738,6 +2808,9 @@ def build_ui(page: ft.Page) -> None:
 
     # чекаємо поки UI завантажиться, потім стартуємо аудіо + голос
     def _start_all():
+        if USE_AUDIO_VIZ:
+            audio_viz.start_stream()
+
         threading.Thread(target=_voice_core, daemon=True).start()
         has_key = load_settings().get("gemini_key", "") or _DEFAULT_GEMINI_KEY
         if not has_key:
@@ -2745,6 +2818,13 @@ def build_ui(page: ft.Page) -> None:
             gemini_status.value = "⚠ Введи Gemini API ключ для роботи асистента"
             gemini_status.color = "#ff6b6b"
             page.update()
+
+        print(f"[debug] first_run = {load_settings().get('first_run', True)}")
+        if load_settings().get("first_run", True):
+            print("[debug] calling show_onboarding")
+            show_onboarding()
+            save_settings({"first_run": False})
+
 
     threading.Timer(1.0, _start_all).start()
 
