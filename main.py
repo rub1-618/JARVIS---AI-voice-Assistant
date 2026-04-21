@@ -110,9 +110,11 @@ _RE_MD_BULLET  = re.compile(r'^\s*[-*+]\s+', re.MULTILINE)
 _RE_MD_LINK    = re.compile(r'\[([^\]]+)\]\([^)]+\)')
 _RE_MD_CODE    = re.compile(r'`{1,3}[^`]*`{1,3}')
 _RE_MD_UNDER   = re.compile(r'_{1,2}([^_]+)_{1,2}')
+_RE_MD_STRIKE  = re.compile(r'~~([^~]+)~~')
 
 def _strip_markdown(text: str) -> str:
     text = _RE_MD_CODE.sub('', text)
+    text = _RE_MD_STRIKE.sub(r'\1', text)
     text = _RE_MD_BOLD.sub(r'\1', text)
     text = _RE_MD_UNDER.sub(r'\1', text)
     text = _RE_MD_LINK.sub(r'\1', text)
@@ -1048,6 +1050,14 @@ OPTS = {
             # eng
             "rename file","change filename","rename",
         ),
+        "reminders": (
+            # укр
+            "напам'ятай мені","напам'ятай","запам'ятай",
+            # рус
+            "напомни мне","напомни","запомни",
+            # eng
+            "remind me","remind","remember",
+        ),
     },
 }
 
@@ -1067,6 +1077,17 @@ _CMD_PHRASES: list[tuple[str, str]] = [
     for phrase in phrases
 ]
 _CMD_PHRASE_STRINGS = [p for p, _ in _CMD_PHRASES]
+
+def parse_reminder(text):
+    match = re.search(r'через (\d+) (хвилин|секунд|годин|минут|секунд|часов|minutes|seconds|hours)', text)
+    if match:
+        n = int(match.group(1))
+        unit = match.group(2)
+        units = {"хвилин": 60, "годин": 3600, "секунд": 1, "минут": 60, "часов": 3600, "minutes": 60, "hours": 3600, "seconds": 1}
+        seconds = n * units.get(unit, 60)
+        return seconds
+    else:
+        return None
 
 def recognize_cmd(command: str) -> dict:
     """
@@ -1356,6 +1377,12 @@ def execute_cmd(cmd: str, raw_text: str) -> None:
     elif cmd == "file_rename":
         _file_cmd_pending = "rename"
         speak("Назвіть ім'я файлу, сер.")
+
+    elif cmd == "reminders":
+        seconds = parse_reminder(raw_text)
+        if seconds:
+            speak("Нагадування встановалено!")
+            threading.Timer(seconds, lambda: speak("Нагадування!")).start()
 
     elif cmd == "unknown":
 

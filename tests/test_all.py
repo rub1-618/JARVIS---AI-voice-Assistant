@@ -27,9 +27,17 @@ def test_strip_bold():
     text = "**bold** text"
     assert _strip_markdown(text) == "bold text"
 
+def test_strip_big_bold():
+    text = "***big bold*** text"
+    assert _strip_markdown(text) == "big bold text"
+
 def test_strip_bullet():
     text = "- bullet text"
     assert _strip_markdown(text) == "bullet text"
+
+def test_strip_strike():
+    text = "~~strike~~ text"
+    assert _strip_markdown(text) == "strike text"
 
 def test_strip_link():
     text = "[text](https://url.com)"
@@ -45,6 +53,14 @@ def test_strip_under():
 
 def test_strip_code():
     text = "`code` text"
+    assert _strip_markdown(text) == "text"
+
+def test_strip_blank():
+    text = ""
+    assert _strip_markdown(text) == ""
+
+def test_strip_no_markdown():
+    text = "text"
     assert _strip_markdown(text) == "text"
 
 # ── recognize_cmd ──────────────────────────────────────────────────────────────
@@ -206,3 +222,65 @@ def test_recognise_cmd_fuzzy_rubish():
 
     result = recognize_cmd("ядажлоп мофу кщжшшп")
     assert not result["percent"] >= 60
+
+    # ── other shi ────────────────────────────────────────────────────────────────────
+    # test_save_settings / test_load_settings — сохранить и прочитать
+    # test_strip_markdown для ***bold***, ~~strike~~
+    # test_recognize_cmd для новых команд: file_read, file_write, music_toggle
+    # test_get_plugins_empty — пустой список когда нет плагинов
+
+from main import save_settings, load_settings
+
+def test_save_settings():
+    save_settings({"ai_mode": "ollama", "gemini_key": "test_key", "theme": {"accent": "#e94560", "bg": "#0d0d1a", "secondary": "#556080"}})
+    result = load_settings()
+    assert result["ai_mode"] == "ollama"
+
+def test_load_settings():
+    result = load_settings()
+    assert "ai_mode" in result
+    assert "theme" in result
+    assert "gemini_key" in result
+
+    #── ask_ai ────────────────────────────────────────────────────────────────────
+
+from main import ask_ai
+
+def test_ask_ai():
+    text = ""
+    assert isinstance(ask_ai(text), str)
+
+    #── LANGUAGES ────────────────────────────────────────────────────────────────────
+
+from main import split_by_language
+
+def test_split_by_language_en():
+    text = "hello"
+    assert split_by_language(text) == [("en", "hello")]
+
+def test_split_by_language_uk():
+    text = "ъуъ"
+    assert split_by_language(text) == [("ru", "ъуъ")]
+
+def test_split_by_language_ru():
+    text = "привіт"
+    assert split_by_language(text) == [("uk", "привіт")]
+
+    #── PARSE_REM ────────────────────────────────────────────────────────────────────
+
+    # def parse_reminder(text):
+    #     match = re.search(r'через (\d+) (хвилин|секунд|годин|минут|секунд|часов|minutes|seconds|hours)', text)
+    #     if match:
+    #         n = int(match.group(1))
+    #         unit = match.group(2)
+    #         units = {"хвилин": 60, "годин": 3600, "секунд": 1, "минут": 60, "часов": 3600, "minutes": 60, "hours": 3600, "seconds": 1}
+    #         seconds = n * units.get(unit, 60)
+    #         return seconds
+    #     else:
+    #         return None
+
+from main import parse_reminder
+
+def test_parse_reminder():
+    assert parse_reminder("через 5 хвилин зателефонувати") == 300
+    assert parse_reminder("пргипш плдитиукідлолуррію") == None
